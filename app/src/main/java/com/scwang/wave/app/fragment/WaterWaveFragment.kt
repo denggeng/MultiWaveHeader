@@ -12,7 +12,6 @@ import com.larswerkman.lobsterpicker.OnColorListener
 import com.scwang.wave.app.R
 import com.scwang.wave.app.util.StatusBarUtil
 import kotlinx.android.synthetic.main.fragment_water_wave.*
-import kotlinx.android.synthetic.main.fragment_wave_pair.*
 import org.adw.library.widgets.discreteseekbar.DiscreteSeekBar
 
 /**

@@ -19,8 +19,6 @@ import android.view.ViewGroup;
 import java.util.ArrayList;
 import java.util.List;
 
-import static java.lang.Float.parseFloat;
-
 /**
  * 多重水波纹
  * Created by SCWANG on 2017/12/11.
@@ -35,8 +33,8 @@ public class WaterWave extends ViewGroup {
     private Paint mPaint3 = new Paint();
     private Paint waterPaint = new Paint();
     private Matrix mMatrix = new Matrix();
-    private Water water = new Water(0xFF056CD0, this.getWidth(), this.getHeight(), 120);
-    private List<Wave2> mltWave = new ArrayList<>();
+    private Water water = new Water(0xFF065986, this.getWidth(), this.getHeight(), 120);
+    private List<WaveNew> mltWave = new ArrayList<>();
     private int mAmplitude;
     private int mStartColor;
     private int mCloseColor;
@@ -51,6 +49,10 @@ public class WaterWave extends ViewGroup {
     private int crest = 2;
 
     private int waterHeight;
+
+    private int colorCambridgeBlue = Color.parseColor("#7affff");
+    private int colorBlue = Color.parseColor("#0ae1fb");
+    private int colorOrange = Color.parseColor("#f9ab87");
 
 
     public WaterWave(Context context) {
@@ -80,18 +82,25 @@ public class WaterWave extends ViewGroup {
         mGradientAngle = ta.getInt(R.styleable.MultiWaveHeader_mwhGradientAngle, 45);
         mIsRunning = ta.getBoolean(R.styleable.MultiWaveHeader_mwhIsRunning, true);
 
-        if (ta.hasValue(R.styleable.MultiWaveHeader_mwhWaves)) {
-            setTag(ta.getString(R.styleable.MultiWaveHeader_mwhWaves));
-        } else if (getTag() == null) {
-            setTag("70,25,1.4,1,-26\n" +
-                    "100,5,1.4,1.2,15\n" +
-                    "420,0,1.15,1,-10\n" +
-                    "520,10,1.7,1.5,20\n" +
-                    "220,0,1,1,-15");
-        }
-
         ta.recycle();
+
     }
+
+    private void initWaves(int w, int h) {
+        WaveNew waveNew1 = new WaveNew(0, 5, w, h,
+                (int) (mAmplitude * 0.8f), crest, true, colorOrange, mColorAlpha);
+        WaveNew waveNew2 = new WaveNew(0, 5, w, h,
+                (int) (mAmplitude * 0.8f), crest, false, colorBlue, mColorAlpha);
+        WaveNew waveNew3 = new WaveNew(200, 8, w, h,
+                mAmplitude, crest, false, colorCambridgeBlue, mColorAlpha);
+        WaveNew waveNew4 = new WaveNew(200, 8, w, h,
+                (int) (mAmplitude * 0.3f), crest, false, Color.WHITE, mColorAlpha);
+        mltWave.add(waveNew1);
+        mltWave.add(waveNew2);
+        mltWave.add(waveNew3);
+        mltWave.add(waveNew4);
+    }
+
 
     @Override
     protected void onLayout(boolean changed, int l, int t, int r, int b) {
@@ -116,23 +125,19 @@ public class WaterWave extends ViewGroup {
             long diffTime = thisTime - mLastTime;
             Log.d(TAG, String.format("diffTime:%d", diffTime));
             canvas.save();
-            //canvas.translate(0, 0 - (1 - mProgress) * height);
             canvas.drawPath(water.getPath(), waterPaint);
             canvas.restore();
             for (int i = 0; i < mltWave.size(); i++) {
-                Wave2 wave = mltWave.get(i);
+                WaveNew wave = mltWave.get(i);
                 canvas.save();
                 if (mLastTime > 0 && wave.getVelocity() != 0) {
-                    float offsetXd = mVelocity * diffTime / 1000f;
+                    float offsetXd = wave.getVelocity() * mVelocity * diffTime / 1000f;
                     wave.moveX(offsetXd);
                     //canvas.translate(0, 0 - (1 - mProgress) * height);
                 } else {
                     //canvas.translate(0, -wave.getOffsetX() - (1 - mProgress) * height);
                 }
-                //mPaint.getShader().setLocalMatrix(mMatrix);
-                Paint paint = i % 2 == 0 ? mPaint2 : mPaint;
-                paint = i % 3 == 0 ? mPaint3 : paint;
-                canvas.drawPath(wave.getPath(), paint);
+                canvas.drawPath(wave.getPath(), wave.getPaint());
                 canvas.restore();
             }
             mLastTime = thisTime;
@@ -157,6 +162,10 @@ public class WaterWave extends ViewGroup {
         closeColor3 = ColorUtils.setAlphaComponent(closeColor3, (int) (mColorAlpha * 255));
 
         int closeColor = ColorUtils.setAlphaComponent(mCloseColor, (int) (mColorAlpha * 255));
+
+        for (WaveNew waveNew : mltWave) {
+            waveNew.setAlpha(mColorAlpha);
+        }
         //noinspection UnnecessaryLocalVariable
         double w = width;
         double h = height * mProgress;
@@ -166,37 +175,13 @@ public class WaterWave extends ViewGroup {
         mPaint.setShader(new LinearGradient((int) (w / 2 - x), (int) (h / 2 - y), (int) (w / 2 + x), (int) (h / 2 + y), startColor, closeColor, Shader.TileMode.CLAMP));
         mPaint2.setShader(new LinearGradient((int) (w / 2 - x), (int) (h / 2 - y), (int) (w / 2 + x), (int) (h / 2 + y), startColor2, closeColor2, Shader.TileMode.CLAMP));
         mPaint3.setShader(new LinearGradient((int) (w / 2 - x), (int) (h / 2 - y), (int) (w / 2 + x), (int) (h / 2 + y), startColor3, closeColor3, Shader.TileMode.CLAMP));
-        waterPaint.setAntiAlias(true);
         waterPaint.setShader(new LinearGradient(0, getWaterHeight(), 0, getWaterHeight() - 120, new int[]{mStartColor2, Color.BLACK}, null, Shader.TileMode.CLAMP));
     }
 
     private void updateWavePath(int w, int h) {
         water.createPath(w, h);
         mltWave.clear();
-
-        if (getTag() instanceof String) {
-            String[] waves = getTag().toString().split("\\s+");
-            if ("-1".equals(getTag())) {
-                waves = "70,25,1.4,1.4,-26\n100,5,1.4,1.2,15\n420,0,1.15,1,-10\n520,10,1.7,1.5,20\n220,0,1,1,-15".split("\\s+");
-            } else if ("-2".equals(getTag())) {
-                waves = "0,0,1,0.5,90\n90,0,1,0.5,90".split("\\s+");
-            }
-            for (String wave : waves) {
-                String[] args = wave.split("\\s*,\\s*");
-                if (args.length == 5) {
-                    mltWave.add(new Wave2(Util.dp2px(parseFloat(args[0])),
-                            Util.dp2px(parseFloat(args[1])), Util.dp2px(parseFloat(args[4])),
-                            parseFloat(args[2]), parseFloat(args[3]), w, h,
-                            mAmplitude / 2, crest,
-                            Util.dp2px(parseFloat(args[4])) >= 0));
-                }
-            }
-        } else {
-            mltWave.add(new Wave2(Util.dp2px(50), Util.dp2px(0),
-                    Util.dp2px(5), 1.7f, 2f, w, h,
-                    mAmplitude / 2, crest, true));
-        }
-
+        initWaves(w, h);
     }
 
     public void setWaves(String waves) {

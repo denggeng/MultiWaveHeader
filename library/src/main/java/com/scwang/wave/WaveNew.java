@@ -1,6 +1,8 @@
 package com.scwang.wave;
 
+import android.graphics.Paint;
 import android.graphics.Path;
+import android.support.v4.graphics.ColorUtils;
 import android.util.Log;
 
 import java.util.HashMap;
@@ -8,11 +10,11 @@ import java.util.Map;
 
 /**
  * 水波对象
- * Created by SCWANG on 2017/12/11.
+ * Created by Kenny on 2017/12/11.
  */
-public class Wave2 {
+public class WaveNew {
 
-    private final String TAG = "Wave2";
+    private final String TAG = "WaveNew";
 
     private Path path;          //水波路径
     private int width;          //画布宽度
@@ -22,9 +24,12 @@ public class Wave2 {
     private float offsetX;        //水波的水平偏移量
     private float offsetY;        //水波的竖直偏移量
     private float velocity;       //水波移动速度（像素/秒）
-    private float scaleX;       //水平拉伸比例
-    private float scaleY;       //竖直拉伸比例
     private float periodNumber = 1; //宽度内的周期个数
+
+    private float alpha;
+
+    //颜色
+    private int color;
 
     //步长，以减少计算量
     private int stepSize = 2;
@@ -36,6 +41,8 @@ public class Wave2 {
 
     private float omega;
 
+    private Paint paint = new Paint();
+
     /**
      * 缓存压缩函数的点阵比例，比如在x=20的点，对y的压缩比例
      */
@@ -46,27 +53,26 @@ public class Wave2 {
      * 通过参数构造一个水波对象
      *
      * @param offsetX   水平偏移量
-     * @param offsetY   竖直偏移量
      * @param velocity  移动速度（像素/秒）
-     * @param scaleX    水平拉伸量
-     * @param scaleY    竖直拉伸量
      * @param w         波长
      * @param h         画布高度
      * @param amplitude 振幅（波高度）
      */
-    Wave2(int offsetX, int offsetY, int velocity, float scaleX, float scaleY, int w, int h,
-         int amplitude, float periodNumber, boolean moveRight) {
+    WaveNew(int offsetX, int velocity, int w, int h,
+            int amplitude, float periodNumber, boolean moveRight, int color, float alpha) {
         this.width = w; //画布宽度
         this.height = h;
         this.amplitude = amplitude; //振幅
-        this.scaleX = scaleX;       //水平拉伸量
-        this.scaleY = scaleY;       //竖直拉伸量
         this.offsetX = offsetX;     //水平偏移量
-        this.offsetY = offsetY;     //竖直偏移量
         this.velocity = velocity;   //移动速度（像素/秒）
         this.periodNumber = periodNumber;
         this.moveRight = moveRight;
+        this.color = color;
         this.omega = (float) (2 * Math.PI / (width / periodNumber));
+        this.alpha = alpha;
+        this.paint.setAntiAlias(true);
+        this.paint.setColor(ColorUtils.
+                setAlphaComponent(color, (int) (alpha * 255)));
         initCompressingMap();
         buildWavePath();
     }
@@ -178,14 +184,6 @@ public class Wave2 {
         return velocity;
     }
 
-    public float getScaleX() {
-        return scaleX;
-    }
-
-    public float getScaleY() {
-        return scaleY;
-    }
-
     public float getPeriodNumber() {
         return periodNumber;
     }
@@ -194,4 +192,30 @@ public class Wave2 {
         this.offsetX = offsetX;
     }
 
+    public int getColor() {
+        return color;
+    }
+
+    public void setColor(int color) {
+        this.color = color;
+    }
+
+    public Paint getPaint() {
+        return paint;
+    }
+
+    public void setPaint(Paint paint) {
+        this.paint = paint;
+    }
+
+    public float getAlpha() {
+        return alpha;
+    }
+
+    public void setAlpha(float alpha) {
+        this.alpha = alpha;
+        this.paint.setColor(ColorUtils.
+                setAlphaComponent(color, (int) (alpha * 255)));
+        initCompressingMap();
+    }
 }
